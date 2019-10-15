@@ -1,4 +1,5 @@
 from tkinter import *
+from PIL import Image, ImageTk
 
 def vyberSubor():
     #zobrazi prehliadač súborov
@@ -35,19 +36,29 @@ pravidla.place(x=5, y=5, height=100, width=150)
 
 #písmená - ešte zistím ako spraviť infinity image
 pismena = LabelFrame (root, bg='#ffd6dc')
-pismena.place(x=5, y=110, height=100, width=150)
+render1 = ImageTk.PhotoImage(Image.open("chocolada.png").resize((50, 50), Image.ANTIALIAS))
+img1 = Label(pismena, image=render1)
+img1.place(x=5, y=5)
+render2 = ImageTk.PhotoImage(Image.open("donut.png").resize((50, 50), Image.ANTIALIAS))
+img2 = Label(pismena, image=render2)
+img2.place(x=5, y=65)
+render3 = ImageTk.PhotoImage(Image.open("zmrzlina.png").resize((50, 50), Image.ANTIALIAS))
+img3 = Label(pismena, image=render3)
+img3.place(x=5, y=125)
+
+pismena.place(x=5, y=110, height=200, width=150)
 
 #vstupné slovo - bude nejake pole
-pociatocne_slovo = Button(root, text="počiatočné")
-pociatocne_slovo.place(x=5, y=215, height=50, width=100)
+pociatocne_slovo = LabelFrame(root, text="Počiatočné slovo")
+pociatocne_slovo.place(x=5, y=315, height=50, width=150)
 
 #koncové slovo - bude nejake pole
-koncove_slovo = Button(root, text="koncové")
-koncove_slovo.place(x=5, y=270, height=50, width=100)
+koncove_slovo = LabelFrame(root, text="Koncové slovo")
+koncove_slovo.place(x=5, y=370, height=50, width=150)
 
 #postup
 postup = LabelFrame(root, text='Postup', bg='#deeff5')
-postup.place(x=160, y=5, height=400, width=400)
+postup.place(x=160, y=5, height=450, width=400)
 
 root.config(menu=menubar, bg='#ADD8E6')
 root.mainloop()
