@@ -102,65 +102,39 @@ nastavenia.add_radiobutton(label="Zobrazovať postup", command=zobrazPostup())
 menubar.add_cascade(label ="Nastavenia", menu=nastavenia)
 menubar.add_cascade(label ="Nové slovo", command=noveSlovo())
 
-#tlačidlá s pravidlami - dá sa ešte upraviť písmo a namiesto text bude image s odkazom
-##pravidla = LabelFrame (root, bg='#D9A5F9', text="Tlačidlá s pravidlami")
-##pravidlo1 = Button(pravidla, text="pravidlo 1")
-##pravidlo1.grid(column=0, row=0)
-##pravidlo2 = Button(pravidla, text="pravidlo 2")
-##pravidlo2.grid(column=0, row=1)
-##pravidlo3 = Button(pravidla, text="pravidlo 3")
-##pravidlo3.grid(column=0, row=2)
-##pravidla.place(x=5, y=5, height=100, width=150)
-
-#písmená - ešte zistím ako spraviť infinity image
-pismena = LabelFrame (root, bg='#ffd6dc')
-render1 = ImageTk.PhotoImage(Image.open("chocolada.png").resize((50, 50), Image.ANTIALIAS))
-img1 = Label(pismena, image=render1)
-img1.place(x=5, y=5)
-render2 = ImageTk.PhotoImage(Image.open("donut.png").resize((50, 50), Image.ANTIALIAS))
-img2 = Label(pismena, image=render2)
-img2.place(x=5, y=65)
-render3 = ImageTk.PhotoImage(Image.open("zmrzlina.png").resize((50, 50), Image.ANTIALIAS))
-img3 = Label(pismena, image=render3)
-img3.place(x=5, y=125)
-
-pismena.place(x=5, y=155, height=190, width=170)
-
 #vstupné slovo - bude nejake pole
 pociatocne_slovo = LabelFrame(root, text="Počiatočné slovo")
-pociatocne_slovo.place(x=5, y=350, height=50, width=170)
+pociatocne_slovo.place(x=5, y=345, height=50, width=170)
 
 #koncové slovo - bude nejake pole
 koncove_slovo = LabelFrame(root, text="Koncové slovo")
-koncove_slovo.place(x=5, y=405, height=50, width=170)
+koncove_slovo.place(x=5, y=400, height=50, width=170)
 
 #postup
 postup = LabelFrame(root, text='Postup', bg='#deeff5')
 postup.place(x=180, y=5, height=450, width=400)
-
-
 
 #písmená
 pismena = LabelFrame (root, bg='#ffd6dc')
 render1 = ImageTk.PhotoImage(Image.open("chocolada.png").resize((50, 50), Image.ANTIALIAS))
 img1 = Label(image=render1)
 img1.bind("<ButtonPress-1>", lambda event: StartMove(img1, event))
-img1.bind("<ButtonRelease-1>", lambda event: StopMove(img1, event, 10, 115, render1))
+img1.bind("<ButtonRelease-1>", lambda event: StopMove(img1, event, 10, 160, render1))
 img1.bind("<B1-Motion>", lambda event: OnMotion(img1, event))
-img1.place(x=10, y=115)
+img1.place(x=10, y=160)
 render2 = ImageTk.PhotoImage(Image.open("donut.png").resize((50, 50), Image.ANTIALIAS))
 img2 = Label(image=render2)
 img2.bind("<ButtonPress-1>", lambda event: StartMove(img2, event))
-img2.bind("<ButtonRelease-1>", lambda event: StopMove(img2, event, 10, 175, render2))
+img2.bind("<ButtonRelease-1>", lambda event: StopMove(img2, event, 10, 220, render2))
 img2.bind("<B1-Motion>", lambda event: OnMotion(img2, event))
-img2.place(x=10, y=175)
+img2.place(x=10, y=220)
 render3 = ImageTk.PhotoImage(Image.open("zmrzlina.png").resize((50, 50), Image.ANTIALIAS))
 img3 = Label(image=render3)
 img3.bind("<ButtonPress-1>", lambda event: StartMove(img3, event))
-img3.bind("<ButtonRelease-1>", lambda event: StopMove(img3, event, 10, 235, render3))
+img3.bind("<ButtonRelease-1>", lambda event: StopMove(img3, event, 10, 280, render3))
 img3.bind("<B1-Motion>", lambda event: OnMotion(img3, event))
-img3.place(x=10, y=235)
-pismena.place(x=5, y=110, height=200, width=200)
+img3.place(x=10, y=280)
+pismena.place(x=5, y=155, height=185, width=170)
 
 root.config(menu=menubar, bg='#ADD8E6')
 root.mainloop()
