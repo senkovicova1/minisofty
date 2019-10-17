@@ -147,25 +147,28 @@ def drawRules():
 
         rulesImg[index] = ImageTk.PhotoImage(rule)
 
-    pravidla = LabelFrame (root, bg='#D9A5F9', text="Tlačidlá s pravidlami")
     pravidlo1 = Button(pravidla, image=rulesImg["a"], bg="#deeff5")
     pravidlo1.place(x=5, y=5)
     pravidlo2 = Button(pravidla, image=rulesImg["b"], bg="#deeff5")
     pravidlo2.place(x=5, y=45)
     pravidlo3 = Button(pravidla, image=rulesImg["c"], bg="#deeff5")
     pravidlo3.place(x=5, y=85)
-    pravidla.place(x=5, y=5, height=145, width=170)
+
 
 root = Tk()
 root.title("Gramatik")
 root.geometry("600x500")
 #menu
 menubar = Menu(root)
-menubar.add_cascade(label="Súbor", command=vyberSubor())
+menubar.add_cascade(label="Súbor", command=lambda: vyberSubor())
 nastavenia = Menu(menubar, tearoff=0)
 nastavenia.add_radiobutton(label="Zobrazovať postup", command=zobrazPostup())
 menubar.add_cascade(label ="Nastavenia", menu=nastavenia)
 menubar.add_command(label ="Nové slovo", command= lambda slovo=slovo: noveSlovo(slovo))
+
+#frame pre pravidlá
+pravidla = LabelFrame (root, bg='#D9A5F9', text="Tlačidlá s pravidlami")
+pravidla.place(x=5, y=5, height=145, width=170)
 
 #vstupné slovo
 pociatocne_slovo = LabelFrame(root, text="Počiatočné slovo")
