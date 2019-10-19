@@ -1,35 +1,47 @@
 from tkinter import *
 from tkinter import filedialog
+import random
+from functools import partial
 
 from PIL import Image, ImageTk
 
-#nebude lepsie mat class miesto global premennych?
-#ako yariadi5, abz sa otvoril az po kliknuti na subor?
-#v buttonoch je place miesto grid ok?
-
-rules = {}
-a = Image.open("chocolada.png")
-b = Image.open("donut.png")
-c = Image.open("zmrzlina.png")
+rules = {} #pravidla nacitane zo suboru - index je ynacka obrazku a value je na co sa zmeni
+rulesImg = {} #pravidla ale uz s obrazkami 
+pics = {} #tri obrazky reprezentujuce slova
 sipka = Image.open("sipka.png")
-rulesImg = {}
-pravidla = None
-slovo = [False, False, False, False, False]
+win = Image.open("win.png")
+
+slovo = [False, False, False, False, False] #pociatocne slovo v obrazkoch
+startWord = [None, None, None, None, None] #pociatocne slovo v znakoch
+endWord = [] #koncove slovo, v znakoch nie obrazkoch
+endWordImg = [] #koncove slovo v obrazkoch
 dis_img = [False, False, False]
+
+difficulty = 3 #difficulty je koeficient ktory sa po kazdom kole zvysuje az po 5; udava kolko pravidiel sa uplatni na pociatocne slovo
+steps = [] #steps je tuple (slovo v stringu, pravidlo ktore nanho bolo aplikovane - a,b,c)
+stepsImg = [] #to iste ako hore ale s img, kvoli referenciam na zmazanie
+helpArr = [] #pomocne pole, nemali by sme ho potrebovat, but here we are
+
+showSteps = True
+
+gameWon = False
 
 def vyberSubor():
     file_path = filedialog.askopenfilename(initialdir = "/",title = "Select file",filetypes =(("Text File", "*.txt"),("All Files","*.*")),)
     loadRules(file_path[file_path.rindex("/")+1:])
 
 def zobrazPostup():
-    #bude zobrazovať postup
-    return
+    global zobrazPostup
+    zobrazPostup = not zobrazPostup
 
 def noveSlovo(slovo):
+    global startWord, gameWon
     #zruší celý postup a koncové slovo - dorobiť
     #odblokuje používanie obrázkov
     if not dis_img[0]:
         for n in range(3):
+            if (not dis_img[n]):
+                continue
             dis_img[n].after(0, dis_img[n].destroy)
             dis_img[n] = False
     #zruší počiatočné slovo
@@ -42,6 +54,9 @@ def noveSlovo(slovo):
             slovo[i].after(0, slovo[i].destroy)
             slovo[i] = False
             i = i + 1
+    startWord = [None, None, None, None, None]
+    helpArr = []
+    gameWon = False
     #zobrazi sipku
     vytvorSipku()
 
@@ -49,11 +64,11 @@ def StartMove(img, event):
     img.x = event.x
     img.y = event.y
 
-def StopMove(img, event, x, y, render):
+def StopMove(index, img, event, x, y, render):
+    global startWord
     info = img.place_info()
     dx = int(info.get('x'))
     dy = int(info.get('y'))
-    print(a, b)
     #mimo prestoru na počiatocne slovo
     if not (5 < dx < 175) & (285 < dy < 335):
         img.place(x=x,y=y)
@@ -64,6 +79,7 @@ def StopMove(img, event, x, y, render):
             if slovo[0] != False:
                 slovo[0].after(0, slovo[0].destroy)
             slovo[0] = img
+            startWord[0] = index
             img.place(x=5, y=300)
         #druhy stvorec
         elif 39 < dx < 73:
@@ -75,6 +91,7 @@ def StopMove(img, event, x, y, render):
                 if slovo[1] != False:
                     slovo[1].after(0, slovo[1].destroy)
                 slovo[1] = img
+                startWord[1] = index
                 img.place(x=39, y=300)
         #treti stvorec
         elif 73 < dx < 107:
@@ -86,6 +103,7 @@ def StopMove(img, event, x, y, render):
                 if slovo[2] != False:
                     slovo[2].after(0, slovo[2].destroy)
                 slovo[2] = img
+                startWord[2] = index
                 img.place(x=73, y=300)
         #stvrty stvorec
         elif 107 < dx < 141:
@@ -97,6 +115,7 @@ def StopMove(img, event, x, y, render):
                 if slovo[3] != False:
                     slovo[3].after(0, slovo[3].destroy)
                 slovo[3] = img
+                startWord[3] = index
                 img.place(x=107, y=300)
         #piaty stvorec
         elif 141 < dx < 175:
@@ -108,13 +127,17 @@ def StopMove(img, event, x, y, render):
                 if slovo[4] != False:
                     slovo[4].after(0, slovo[4].destroy)
                 slovo[4] = img
+                startWord[4] = index
                 img.place(x=141, y=300)
         #vytvori novy obrazok
+                
         n = Label(image=render)
         n.bind("<ButtonPress-1>", lambda event: StartMove(n, event))
-        n.bind("<ButtonRelease-1>", lambda event: StopMove(n, event, x, y, render))
+        n.bind("<ButtonRelease-1>", lambda event: StopMove(index, n, event, x, y, render))
         n.bind("<B1-Motion>", lambda event: OnMotion(n, event))
         n.place(x=x,y=y)
+
+
 
 def OnMotion(img, event):
     deltax = event.x - img.x
@@ -124,43 +147,72 @@ def OnMotion(img, event):
     img.place(x=x, y=y)
 
 def loadRules(file):
-    global rules
+    global rules, pics
     with open(file,'r') as t:
+        cesta = t.readline().strip()
         riadok = t.readline().strip()
         while riadok != '':
             arr = riadok.split(" ")
-            rules[arr[0]] = arr[1]
+            rules[arr[0]] = arr[2]
+            pics[arr[0]] = Image.open(cesta + "/" + arr[0] + ".png")
+            helpArr.append(arr[0])
             riadok = t.readline().strip()
     drawRules()
 
 def drawRules():
-    global rulesImg, a, b, c, rules, root, pravidla
-    for index, seq in rules.items():
+    global rulesImg, pics, rules, root, pravidla, render1, render2, render3, helpArr
+    r = sorted(list(rules.keys()))
+        
+    for i in range(len(rules)):
+        index = r[i]
+        seq = rules[index]
+        
         length = 30 + 30 + 30*len(seq)
         rule = Image.new('RGBA', (length, 30), (255,255,255,0))
-        if (index == "a"):
-            rule.paste(a.resize((30, 30)), (0, 0))
-        elif (index == "b"):
-            rule.paste(b.resize((30, 30)), (0, 0))
-        elif (index == "c"):
-            rule.paste(c.resize((30, 30)), (0, 0))
+        
+        rule.paste(pics[index].resize((30, 30)), (0, 0))
         rule.paste(sipka.resize((30, 30)), (30, 0))
-        for i in range(len(seq)):
-            if (seq[i] == "a"):
-                rule.paste(a.resize((30,30)), (60+30*i, 0))
-            elif (seq[i] == "b"):
-                rule.paste(b.resize((30,30)), (60+30*i, 0))
-            elif (seq[i] == "c"):
-                rule.paste(c.resize((30,30)), (60+30*i, 0))
+        
+        for s in range(len(seq)):
+            rule.paste(pics[seq[s]].resize((30,30)), (60+30*s, 0))
 
         rulesImg[index] = ImageTk.PhotoImage(rule)
 
-    pravidlo1 = Button(pravidla, image=rulesImg["a"], bg="#deeff5")
-    pravidlo1.place(x=5, y=5)
-    pravidlo2 = Button(pravidla, image=rulesImg["b"], bg="#deeff5")
-    pravidlo2.place(x=5, y=45)
-    pravidlo3 = Button(pravidla, image=rulesImg["c"], bg="#deeff5")
-    pravidlo3.place(x=5, y=85)
+        if i == 0:
+            action_with_arg = partial(addStep, helpArr[0])
+            pravidlo1 = Button(pravidla, image=rulesImg[index], bg="#deeff5", command=action_with_arg)
+            pravidlo1.place(x=5, y=5)
+            
+            render1 = ImageTk.PhotoImage(pics[index].resize((30, 30), Image.ANTIALIAS))
+            img1 = Label(image=render1)
+            img1.bind("<ButtonPress-1>", lambda event: StartMove(img1, event))
+            img1.bind("<ButtonRelease-1>", lambda event: StopMove(helpArr[0], img1, event, 10, 160, render1))
+            img1.bind("<B1-Motion>", lambda event: OnMotion(img1, event))
+            img1.place(x=10, y=160)
+            
+        elif i == 1:
+            action_with_arg = partial(addStep, helpArr[1])
+            pravidlo2 = Button(pravidla, image=rulesImg[index], bg="#deeff5", command=action_with_arg)
+            pravidlo2.place(x=5, y=45)
+
+            render2 = ImageTk.PhotoImage(pics[index].resize((30, 30), Image.ANTIALIAS))
+            img2 = Label(image=render2)
+            img2.bind("<ButtonPress-1>", lambda event: StartMove(img2, event))
+            img2.bind("<ButtonRelease-1>", lambda event: StopMove(helpArr[1], img2, event, 10, 200, render2))
+            img2.bind("<B1-Motion>", lambda event: OnMotion(img2, event))
+            img2.place(x=10, y=200)
+            
+        elif i == 2:
+            action_with_arg = partial(addStep, helpArr[2])
+            pravidlo3 = Button(pravidla, image=rulesImg[index], bg="#deeff5", command=action_with_arg)
+            pravidlo3.place(x=5, y=85)
+
+            render3 = ImageTk.PhotoImage(pics[index].resize((30, 30), Image.ANTIALIAS))
+            img3 = Label(image=render3)
+            img3.bind("<ButtonPress-1>", lambda event: StartMove(img3, event))
+            img3.bind("<ButtonRelease-1>", lambda event: StopMove(helpArr[2], img3, event, 10, 240, render3))
+            img3.bind("<B1-Motion>", lambda event: OnMotion(img3, event))
+            img3.place(x=10, y=240)
 
 def vytvorSipku():
     global arrow
@@ -200,12 +252,110 @@ def getColor(event):
                         slovo[i].unbind("<B1-Motion>")
                         i = i + 1
                 #sipka zmizne
+                generateEndWord()
                 arrow.destroy()
 
+def generateEndWord():
+    global difficulty, endWord, startWord, rules
+    word = [w for w in startWord if w is not None]    
+    
+    for i in range(difficulty):
+        r = set(word)
+        r.discard(None)
+        rule = random.choice(list(r))
+        word = applyRule(word, rule)
+    endWord = word
+    drawEndWord(endWord)
+    
+    addStep(None, "".join([w for w in startWord if w is not None]))
+
+def applyRule(word, rule):    
+    seq = rules[rule]
+    string = "".join(word)
+    newWord = string[:string.index(rule)] + seq + string[string.index(rule)+1:]
+##   print(word, " + (", rule, " => ", seq, ") = ", newWord)
+    return [char for char in newWord]
+
+def drawEndWord(word):
+    global endWordImg, pics
+    for i in range(len(word)):
+        im = Image.open("obrazky/" + word[i] + ".png")
+        render = ImageTk.PhotoImage(im.resize((30, 30), Image.ANTIALIAS))
+        img = Label(image=render)
+        img.image = render
+        img.place(x=10+31*(i%5), y=360+(30*(i//5)))
+        endWordImg.append(img)
+
+def addStep(rule, word = None):
+    global steps, endWord, gameWon
+    if (gameWon):
+        return
+    if rule is not None and len(endWord) > 0 and rule in steps[-1][0]:
+        a, b = steps[-1]
+        steps.pop()
+        steps.append((a, rule))
+        w = applyRule(a, rule)
+        steps.append((w, None))
+    elif word is not None:
+        steps.append((word, None))
+    drawPostup()
+
+def check():
+    global endWord, steps
+    return "".join(endWord) == "".join(steps[-1][0])
+
+def drawPostup():
+    global steps, stepsImg, rulesImg, pics, showSteps, gameWon
+    i = len(stepsImg) - 1    
+    while i >= 0:
+        stepsImg[i][0].after(0, stepsImg[i][0].destroy)
+        if (stepsImg[i][1] is not None):
+            stepsImg[i][1].after(0, stepsImg[i][1].destroy)
+        stepsImg.pop()
+        i -= 1
+
+    diff = 30
+    
+    for i in range(len(steps)):
+        a, b = steps[i]
+           
+        p = Image.new('RGBA', (40*len(a), 40), (255,255,255,0))
+                
+        for s in range(len(a)):
+            p.paste(pics[a[s]].resize((40,40)), (40*s, 0))
+  
+        pic = ImageTk.PhotoImage(p)
+        img = Label(image=pic)
+        img.image = pic
+        img.place(x=190, y=30 + 50*i)
+
+        img2 = None
+        if b is not None and showSteps:
+            img2 = Label(image=rulesImg[b])
+            img2.image = rulesImg[b]
+            img2.place(x=660+31*5, y=30 + 50*i)
+    
+        stepsImg.append((img, img2))
+    
+    if check():
+        gameWon = True
+        disableGame()
+        drawWin()
+
+def disableGame():
+    #zariadi aby sa uz nedalo klikat na buttony 
+    return
+
+def drawWin():
+    global win
+    pic = ImageTk.PhotoImage(win)
+    img = Label(image=pic)
+    img.image = pic
+    img.place(x=250, y=100)
 
 root = Tk()
 root.title("Gramatik")
-root.geometry("600x500")
+root.geometry("1000x500")
 #menu
 menubar = Menu(root)
 menubar.add_cascade(label="Súbor", command=lambda: vyberSubor())
@@ -230,11 +380,11 @@ pociatocne_slovo.place(x=5, y=285, height=50, width=170)
 
 #koncové slovo
 koncove_slovo = LabelFrame(root, text="Koncové slovo")
-koncove_slovo.place(x=5, y=340, height=50, width=170)
+koncove_slovo.place(x=5, y=340, height=150, width=170)
 
 #postup
 postup = LabelFrame(root, text='Postup', bg='#deeff5')
-postup.place(x=180, y=5, height=450, width=400)
+postup.place(x=180, y=5, height=485, width=800)
 
 #sipka na potvrdenie pociatocneho slova
 arrow = Canvas(root)
@@ -242,24 +392,27 @@ vytvorSipku()
 
 #písmená
 pismena = LabelFrame (root, bg='#ffd6dc')
-render1 = ImageTk.PhotoImage(Image.open("chocolada.png").resize((30, 30), Image.ANTIALIAS))
-img1 = Label(image=render1)
-img1.bind("<ButtonPress-1>", lambda event: StartMove(img1, event))
-img1.bind("<ButtonRelease-1>", lambda event: StopMove(img1, event, 10, 160, render1))
-img1.bind("<B1-Motion>", lambda event: OnMotion(img1, event))
-img1.place(x=10, y=160)
-render2 = ImageTk.PhotoImage(Image.open("donut.png").resize((30, 30), Image.ANTIALIAS))
-img2 = Label(image=render2)
-img2.bind("<ButtonPress-1>", lambda event: StartMove(img2, event))
-img2.bind("<ButtonRelease-1>", lambda event: StopMove(img2, event, 10, 200, render2))
-img2.bind("<B1-Motion>", lambda event: OnMotion(img2, event))
-img2.place(x=10, y=200)
-render3 = ImageTk.PhotoImage(Image.open("zmrzlina.png").resize((30, 30), Image.ANTIALIAS))
-img3 = Label(image=render3)
-img3.bind("<ButtonPress-1>", lambda event: StartMove(img3, event))
-img3.bind("<ButtonRelease-1>", lambda event: StopMove(img3, event, 10, 240, render3))
-img3.bind("<B1-Motion>", lambda event: OnMotion(img3, event))
-img3.place(x=10, y=240)
+render1 = None
+render2 = None
+render3 = None
+##render1 = ImageTk.PhotoImage(Image.open("chocolada.png").resize((30, 30), Image.ANTIALIAS))
+##    img1 = Label(image=render1)
+##    img1.bind("<ButtonPress-1>", lambda event: StartMove(img1, event))
+##    img1.bind("<ButtonRelease-1>", lambda event: StopMove(img1, event, 10, 160, render1))
+##    img1.bind("<B1-Motion>", lambda event: OnMotion(img1, event))
+##    img1.place(x=10, y=160)
+##    render2 = ImageTk.PhotoImage(Image.open("donut.png").resize((30, 30), Image.ANTIALIAS))
+##    img2 = Label(image=render2)
+##    img2.bind("<ButtonPress-1>", lambda event: StartMove(img2, event))
+##    img2.bind("<ButtonRelease-1>", lambda event: StopMove(img2, event, 10, 200, render2))
+##    img2.bind("<B1-Motion>", lambda event: OnMotion(img2, event))
+##    img2.place(x=10, y=200)
+##    render3 = ImageTk.PhotoImage(Image.open("zmrzlina.png").resize((30, 30), Image.ANTIALIAS))
+##    img3 = Label(image=render3)
+##    img3.bind("<ButtonPress-1>", lambda event: StartMove(img3, event))
+##    img3.bind("<ButtonRelease-1>", lambda event: StopMove(img3, event, 10, 240, render3))
+##    img3.bind("<B1-Motion>", lambda event: OnMotion(img3, event))
+##    img3.place(x=10, y=240)
 pismena.place(x=5, y=155, height=125, width=170)
 
 root.config(menu=menubar, bg='#ADD8E6')
