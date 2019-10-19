@@ -15,6 +15,7 @@ sipka = Image.open("sipka.png")
 rulesImg = {}
 pravidla = None
 slovo = [False, False, False, False, False]
+dis_img = [False, False, False]
 
 def vyberSubor():
     file_path = filedialog.askopenfilename(initialdir = "/",title = "Select file",filetypes =(("Text File", "*.txt"),("All Files","*.*")),)
@@ -26,6 +27,11 @@ def zobrazPostup():
 
 def noveSlovo(slovo):
     #zruší celý postup a koncové slovo - dorobiť
+    #odblokuje používanie obrázkov
+    if not dis_img[0]:
+        for n in range(3):
+            dis_img[n].after(0, dis_img[n].destroy)
+            dis_img[n] = False
     #zruší počiatočné slovo
     i = 0
     while i < 5:
@@ -34,8 +40,10 @@ def noveSlovo(slovo):
             break
         else:
             slovo[i].after(0, slovo[i].destroy)
+            slovo[i] = False
             i = i + 1
-    slovo = [False, False, False, False, False]
+    #zobrazi sipku
+    vytvorSipku()
 
 def StartMove(img, event):
     img.x = event.x
@@ -154,6 +162,46 @@ def drawRules():
     pravidlo3 = Button(pravidla, image=rulesImg["c"], bg="#deeff5")
     pravidlo3.place(x=5, y=85)
 
+def vytvorSipku():
+    global arrow
+    arrow = Canvas(root, height=50, width=80, bg='#deeff5', bd=-2)
+    arrow.create_polygon(0, 15, 50, 15, 50, 0, 80, 25, 50, 50, 50, 35, 0, 35, fill='green')
+    arrow.bind("<ButtonPress-1>", getColor)
+    arrow.place(x=190, y=285)
+
+def getColor(event):
+    global arrow
+    dx = event.x
+    dy = event.y
+    ids = arrow.find_overlapping(dx, dy, dx, dy)
+    if ids:
+        index = ids[-1]
+        color = arrow.itemcget(index, "fill")
+        if color == 'green':
+            if slovo[0] != False:
+                #vytvori nepohyblive obrazky cez uz existujuce, cim ich zablokuje
+                img_b1 = Label(image=render1)
+                img_b1.place(x=10, y=160)
+                img_b2 = Label(image=render2)
+                img_b2.place(x=10, y=200)
+                img_b3 = Label(image=render3)
+                img_b3.place(x=10, y=240)
+                global dis_img
+                dis_img = [img_b1, img_b2, img_b3]
+                #nedovoli pohnut pismenami v slove
+                i = 0
+                while i < 5:
+                    if (slovo[i] == False):
+                        i = i + 1
+                        break
+                    else:
+                        slovo[i].unbind("<ButtonPress-1>")
+                        slovo[i].unbind("<ButtonRelease-1>")
+                        slovo[i].unbind("<B1-Motion>")
+                        i = i + 1
+                #sipka zmizne
+                arrow.destroy()
+
 
 root = Tk()
 root.title("Gramatik")
@@ -170,7 +218,7 @@ menubar.add_command(label ="Nové slovo", command= lambda slovo=slovo: noveSlovo
 pravidla = LabelFrame (root, bg='#D9A5F9', text="Tlačidlá s pravidlami")
 pravidla.place(x=5, y=5, height=145, width=170)
 
-#vstupné slovo
+#pociatocne slovo
 pociatocne_slovo = LabelFrame(root, text="Počiatočné slovo")
 ciary = Canvas(pociatocne_slovo, height=27, width=160)
 ciary.create_line(34, 0, 34, 30)
@@ -178,7 +226,6 @@ ciary.create_line(68, 0, 68, 30)
 ciary.create_line(102, 0, 102, 30)
 ciary.create_line(136, 0, 136, 30)
 ciary.place(x=0, y=0)
-
 pociatocne_slovo.place(x=5, y=285, height=50, width=170)
 
 #koncové slovo
@@ -188,6 +235,10 @@ koncove_slovo.place(x=5, y=340, height=50, width=170)
 #postup
 postup = LabelFrame(root, text='Postup', bg='#deeff5')
 postup.place(x=180, y=5, height=450, width=400)
+
+#sipka na potvrdenie pociatocneho slova
+arrow = Canvas(root)
+vytvorSipku()
 
 #písmená
 pismena = LabelFrame (root, bg='#ffd6dc')
