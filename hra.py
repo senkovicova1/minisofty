@@ -36,13 +36,11 @@ def zobrazPostup():
     zobrazPostup = not zobrazPostup
 
 def noveSlovo(slovo):
-    global startWord, endWord, endWordImg, gameWon, winRef, stepsImg, difficulty
+    global startWord, endWord, endWordImg, gameWon, winRef, stepsImg, difficulty, dis_img
     #zruší celý postup a koncové slovo - dorobiť
     #odblokuje používanie obrázkov
-    if not dis_img[0]:
+    if dis_img[0] != False:
         for n in range(3):
-            if (not dis_img[n]):
-                continue
             dis_img[n].after(0, dis_img[n].destroy)
             dis_img[n] = False
     #zruší počiatočné slovo
