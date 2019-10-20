@@ -58,7 +58,9 @@ def noveSlovo(slovo):
             
     startWord = [None, None, None, None, None]
     if (gameWon):
-        difficulty = ((difficulty % 6) + 1
+        difficulty += 1
+        if difficulty >= 6:
+            difficulty = 6
         winRef.after(0, winRef.destroy)
         winRef = None
     gameWon = False
