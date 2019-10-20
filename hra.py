@@ -10,6 +10,7 @@ rulesImg = {} #pravidla ale uz s obrazkami
 pics = {} #tri obrazky reprezentujuce slova
 sipka = Image.open("sipka.png")
 win = Image.open("win.png")
+winRef = None
 
 slovo = [False, False, False, False, False] #pociatocne slovo v obrazkoch
 startWord = [None, None, None, None, None] #pociatocne slovo v znakoch
@@ -17,7 +18,7 @@ endWord = [] #koncove slovo, v znakoch nie obrazkoch
 endWordImg = [] #koncove slovo v obrazkoch
 dis_img = [False, False, False]
 
-difficulty = 3 #difficulty je koeficient ktory sa po kazdom kole zvysuje az po 5; udava kolko pravidiel sa uplatni na pociatocne slovo
+difficulty = 1 #difficulty je koeficient ktory sa po kazdom kole zvysuje az po 5; udava kolko pravidiel sa uplatni na pociatocne slovo
 steps = [] #steps je tuple (slovo v stringu, pravidlo ktore nanho bolo aplikovane - a,b,c)
 stepsImg = [] #to iste ako hore ale s img, kvoli referenciam na zmazanie
 helpArr = [] #pomocne pole, nemali by sme ho potrebovat, but here we are
@@ -35,7 +36,7 @@ def zobrazPostup():
     zobrazPostup = not zobrazPostup
 
 def noveSlovo(slovo):
-    global startWord, gameWon
+    global startWord, endWord, endWordImg, gameWon, winRef, stepsImg, difficulty
     #zruší celý postup a koncové slovo - dorobiť
     #odblokuje používanie obrázkov
     if not dis_img[0]:
@@ -54,9 +55,24 @@ def noveSlovo(slovo):
             slovo[i].after(0, slovo[i].destroy)
             slovo[i] = False
             i = i + 1
+            
     startWord = [None, None, None, None, None]
-    helpArr = []
+    if (gameWon):
+        difficulty = ((difficulty % 6) + 1
+        winRef.after(0, winRef.destroy)
+        winRef = None
     gameWon = False
+    for p in stepsImg:
+        a,b = p
+        a.after(0, a.destroy)
+        if b is not None:
+            b.after(0, b.destroy)
+    steps = []
+    endWord = []
+    for a in endWordImg:
+        a.after(0, a.destroy)
+    endWordImg = []
+    
     #zobrazi sipku
     vytvorSipku()
 
@@ -140,6 +156,7 @@ def StopMove(index, img, event, x, y, render):
 
 
 def OnMotion(img, event):
+    print("moving")
     deltax = event.x - img.x
     deltay = event.y - img.y
     x = img.winfo_x() + deltax
@@ -347,11 +364,12 @@ def disableGame():
     return
 
 def drawWin():
-    global win
+    global win, winRef
     pic = ImageTk.PhotoImage(win)
     img = Label(image=pic)
     img.image = pic
     img.place(x=250, y=100)
+    winRef = img
 
 root = Tk()
 root.title("Gramatik")
