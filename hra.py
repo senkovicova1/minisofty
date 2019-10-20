@@ -9,7 +9,7 @@ rules = {} #pravidla nacitane zo suboru - index je ynacka obrazku a value je na 
 rulesImg = {} #pravidla ale uz s obrazkami 
 pics = {} #tri obrazky reprezentujuce slova
 sipka = Image.open("sipka.png")
-win = Image.open("win.png")
+win = Image.open("win.jpg")
 
 winRef = None
 
@@ -409,10 +409,10 @@ def disableGame():
 
 def drawWin():
     global win, winRef
-    pic = ImageTk.PhotoImage(win)
-    img = Label(image=pic)
+    pic = ImageTk.PhotoImage(win.resize((300, 300), Image.ANTIALIAS))
+    img = Label(image=pic, bd=-2)
     img.image = pic
-    img.place(x=250, y=100)
+    img.place(x=350, y=100)
     winRef = img
 
 root = Tk()
