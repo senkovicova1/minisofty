@@ -10,6 +10,7 @@ rulesImg = {} #pravidla ale uz s obrazkami
 pics = {} #tri obrazky reprezentujuce slova
 sipka = Image.open("sipka.png")
 win = Image.open("win.png")
+
 winRef = None
 
 slovo = [False, False, False, False, False] #pociatocne slovo v obrazkoch
@@ -18,7 +19,7 @@ endWord = [] #koncove slovo, v znakoch nie obrazkoch
 endWordImg = [] #koncove slovo v obrazkoch
 dis_img = [False, False, False]
 
-difficulty = 1 #difficulty je koeficient ktory sa po kazdom kole zvysuje az po 5; udava kolko pravidiel sa uplatni na pociatocne slovo
+difficulty = 3 #difficulty je koeficient ktory sa po kazdom kole zvysuje az po 5; udava kolko pravidiel sa uplatni na pociatocne slovo
 steps = [] #steps je tuple (slovo v stringu, pravidlo ktore nanho bolo aplikovane - a,b,c)
 stepsImg = [] #to iste ako hore ale s img, kvoli referenciam na zmazanie
 helpArr = [] #pomocne pole, nemali by sme ho potrebovat, but here we are
@@ -32,11 +33,13 @@ def vyberSubor():
     loadRules(file_path[file_path.rindex("/")+1:])
 
 def zobrazPostup():
-    global zobrazPostup
-    zobrazPostup = not zobrazPostup
+    global showSteps, steps
+    showSteps = not showSteps
+    if len(steps) > 0 and not gameWon:
+        drawPostup()
 
 def noveSlovo(slovo):
-    global startWord, endWord, endWordImg, gameWon, winRef, stepsImg, difficulty, dis_img
+    global startWord, endWord, endWordImg, gameWon, winRef, steps, stepsImg, difficulty, dis_img
     #zruší celý postup a koncové slovo - dorobiť
     #odblokuje používanie obrázkov
     if dis_img[0] != False:
@@ -156,7 +159,6 @@ def StopMove(index, img, event, x, y, render):
 
 
 def OnMotion(img, event):
-    print("moving")
     deltax = event.x - img.x
     deltay = event.y - img.y
     x = img.winfo_x() + deltax
@@ -331,28 +333,67 @@ def drawPostup():
         stepsImg.pop()
         i -= 1
 
-    diff = 30
-    
-    for i in range(len(steps)):
-        a, b = steps[i]
-           
+    if showSteps:        
+        for i in range(len(steps)):
+            a, b = steps[i]
+               
+            p = Image.new('RGBA', (40*len(a), 40), (255,255,255,0))
+                    
+            for s in range(len(a)):
+                p.paste(pics[a[s]].resize((40,40)), (40*s, 0))
+      
+            pic = ImageTk.PhotoImage(p)
+            img = Label(image=pic)
+            img.image = pic
+            img.place(x=190, y=30 + 50*i)
+
+            img2 = None
+            if b is not None and showSteps:
+                img2 = Label(image=rulesImg[b])
+                img2.image = rulesImg[b]
+                img2.place(x=660+31*5, y=30 + 50*i)
+        
+            stepsImg.append((img, img2))
+    else:
+        a, b = steps[0]
         p = Image.new('RGBA', (40*len(a), 40), (255,255,255,0))
-                
+                    
         for s in range(len(a)):
             p.paste(pics[a[s]].resize((40,40)), (40*s, 0))
-  
+      
         pic = ImageTk.PhotoImage(p)
         img = Label(image=pic)
         img.image = pic
-        img.place(x=190, y=30 + 50*i)
+        img.place(x=190, y=30)
 
         img2 = None
         if b is not None and showSteps:
             img2 = Label(image=rulesImg[b])
             img2.image = rulesImg[b]
-            img2.place(x=660+31*5, y=30 + 50*i)
-    
+            img2.place(x=660+31*5, y=30)
+        
         stepsImg.append((img, img2))
+
+        if (len(steps) > 1):
+            c, d = steps[-1]
+            p = Image.new('RGBA', (40*len(c), 40), (255,255,255,0))
+                        
+            for s in range(len(c)):
+                p.paste(pics[c[s]].resize((40,40)), (40*s, 0))
+          
+            pic = ImageTk.PhotoImage(p)
+            img = Label(image=pic)
+            img.image = pic
+            img.place(x=190, y=30 + 50)
+
+            img2 = None
+            if d is not None and showSteps:
+                img2 = Label(image=rulesImg[d])
+                img2.image = rulesImg[d]
+                img2.place(x=660+31*5, y=30 + 50)
+            
+            stepsImg.append((img, img2))
+        
     
     if check():
         gameWon = True
@@ -378,7 +419,7 @@ root.geometry("1000x500")
 menubar = Menu(root)
 menubar.add_cascade(label="Súbor", command=lambda: vyberSubor())
 nastavenia = Menu(menubar, tearoff=0)
-nastavenia.add_radiobutton(label="Zobrazovať postup", command=zobrazPostup())
+nastavenia.add_radiobutton(label="Zobrazovať postup", command=zobrazPostup)
 menubar.add_cascade(label ="Nastavenia", menu=nastavenia)
 menubar.add_command(label ="Nové slovo", command= lambda slovo=slovo: noveSlovo(slovo))
 
