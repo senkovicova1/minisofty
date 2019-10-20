@@ -35,6 +35,9 @@ def vyberSubor():
 def zobrazPostup():
     global showSteps, steps
     showSteps = not showSteps
+    #zmeni check/uncheck pri zobrazovaní postupu v menu
+    if not showSteps:
+        check_button.set(0)
     if len(steps) > 0 and not gameWon:
         drawPostup()
 
@@ -419,7 +422,9 @@ root.geometry("1000x500")
 menubar = Menu(root)
 menubar.add_cascade(label="Súbor", command=lambda: vyberSubor())
 nastavenia = Menu(menubar, tearoff=0)
-nastavenia.add_radiobutton(label="Zobrazovať postup", command=zobrazPostup)
+check_button = Variable()
+check_button.set(1)
+nastavenia.add_checkbutton(label="Zobrazovať postup", variable=check_button, command=zobrazPostup)
 menubar.add_cascade(label ="Nastavenia", menu=nastavenia)
 menubar.add_command(label ="Nové slovo", command= lambda slovo=slovo: noveSlovo(slovo))
 
