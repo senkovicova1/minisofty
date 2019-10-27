@@ -174,7 +174,8 @@ def OnMotion(img, event):
     img.place(x=x, y=y)
 
 def loadRules(file):
-    global rules, pics
+    global rules, pics, difficulty
+    difficulty = 1
     with open(file,'r') as t:
         cesta = t.readline().strip()
         riadok = t.readline().strip()
