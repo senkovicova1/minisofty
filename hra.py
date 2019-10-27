@@ -5,6 +5,7 @@ from functools import partial
 
 from PIL import Image, ImageTk
 
+
 rules = {} #pravidla nacitane zo suboru - index je ynacka obrazku a value je na co sa zmeni
 rulesImg = {} #pravidla ale uz s obrazkami 
 pics = {} #tri obrazky reprezentujuce slova
@@ -19,7 +20,7 @@ endWord = [] #koncove slovo, v znakoch nie obrazkoch
 endWordImg = [] #koncove slovo v obrazkoch
 dis_img = [False, False, False]
 
-difficulty = 3 #difficulty je koeficient ktory sa po kazdom kole zvysuje az po 5; udava kolko pravidiel sa uplatni na pociatocne slovo
+difficulty = 1 #difficulty je koeficient ktory sa po kazdom kole zvysuje az po 5; udava kolko pravidiel sa uplatni na pociatocne slovo
 steps = [] #steps je tuple (slovo v stringu, pravidlo ktore nanho bolo aplikovane - a,b,c)
 stepsImg = [] #to iste ako hore ale s img, kvoli referenciam na zmazanie
 helpArr = [] #pomocne pole, nemali by sme ho potrebovat, but here we are
@@ -45,6 +46,10 @@ def noveSlovo(slovo):
     global startWord, endWord, endWordImg, gameWon, winRef, steps, stepsImg, difficulty, dis_img
     #zruší celý postup a koncové slovo - dorobiť
     #odblokuje používanie obrázkov
+    if (len(endWord) == 0):
+        
+        return
+    
     if dis_img[0] != False:
         for n in range(3):
             dis_img[n].after(0, dis_img[n].destroy)
@@ -173,12 +178,14 @@ def loadRules(file):
     with open(file,'r') as t:
         cesta = t.readline().strip()
         riadok = t.readline().strip()
-        while riadok != '':
+        i = 0
+        while riadok != '' or i <= 2:
             arr = riadok.split(" ")
             rules[arr[0]] = arr[2]
             pics[arr[0]] = Image.open(cesta + "/" + arr[0] + ".png")
             helpArr.append(arr[0])
             riadok = t.readline().strip()
+            i += 1
     drawRules()
 
 def drawRules():
@@ -278,7 +285,7 @@ def getColor(event):
                 arrow.destroy()
 
 def generateEndWord():
-    global difficulty, endWord, startWord, rules
+    global difficulty, endWord, startWord, rules, gameWon, steps
     word = [w for w in startWord if w is not None]    
     
     for i in range(difficulty):
@@ -288,8 +295,10 @@ def generateEndWord():
         word = applyRule(word, rule)
     endWord = word
     drawEndWord(endWord)
+
+    steps.append(("".join([w for w in endWord if w is not None]), None))    
+    addStep(None, "".join([w for w in startWord if w is not None]), )
     
-    addStep(None, "".join([w for w in startWord if w is not None]))
 
 def applyRule(word, rule):    
     seq = rules[rule]
@@ -309,22 +318,25 @@ def drawEndWord(word):
         endWordImg.append(img)
 
 def addStep(rule, word = None):
-    global steps, endWord, gameWon
+    global steps, endWord, gameWon    
     if (gameWon):
         return
-    if rule is not None and len(endWord) > 0 and rule in steps[-1][0]:
-        a, b = steps[-1]
-        steps.pop()
+    if rule is not None and len(endWord) > 0 and rule in steps[-2][0]:
+        theLast = steps.pop()
+        a, b = steps.pop() 
         steps.append((a, rule))
         w = applyRule(a, rule)
         steps.append((w, None))
-    elif word is not None:
+        steps.append(theLast)
+    elif word is not None:        
+        theLast = steps.pop()
         steps.append((word, None))
+        steps.append(theLast)
     drawPostup()
 
 def check():
     global endWord, steps
-    return "".join(endWord) == "".join(steps[-1][0])
+    return "".join(endWord) == "".join(steps[-2][0])
 
 def drawPostup():
     global steps, stepsImg, rulesImg, pics, showSteps, gameWon
@@ -337,18 +349,22 @@ def drawPostup():
         i -= 1
 
     if showSteps:        
-        for i in range(len(steps)):
-            a, b = steps[i]
+        for i in range(len(steps)):                 
+            a, b = steps[i]            
                
             p = Image.new('RGBA', (40*len(a), 40), (255,255,255,0))
                     
             for s in range(len(a)):
                 p.paste(pics[a[s]].resize((40,40)), (40*s, 0))
+
+            y = 30 + 50*i
+            if i == len(steps)-1:
+                 y = 440
       
             pic = ImageTk.PhotoImage(p)
             img = Label(image=pic)
             img.image = pic
-            img.place(x=190, y=30 + 50*i)
+            img.place(x=190, y=y)
 
             img2 = None
             if b is not None and showSteps:
@@ -359,7 +375,7 @@ def drawPostup():
             stepsImg.append((img, img2))
     else:
         a, b = steps[0]
-        p = Image.new('RGBA', (40*len(a), 40), (255,255,255,0))
+        p = Image.new('RGBA', (40*len(a), 40), (222,239,245,0))
                     
         for s in range(len(a)):
             p.paste(pics[a[s]].resize((40,40)), (40*s, 0))
@@ -377,12 +393,27 @@ def drawPostup():
         
         stepsImg.append((img, img2))
 
-        if (len(steps) > 1):
-            c, d = steps[-1]
-            p = Image.new('RGBA', (40*len(c), 40), (255,255,255,0))
+        c, d = steps[-1]
+        p = Image.new('RGBA', (40*len(c), 40), (222,239,245,0))
                         
-            for s in range(len(c)):
-                p.paste(pics[c[s]].resize((40,40)), (40*s, 0))
+        for s in range(len(c)):
+            p.paste(pics[c[s]].resize((40,40)), (40*s, 0))
+          
+        pic = ImageTk.PhotoImage(p)
+        img = Label(image=pic)
+        img.image = pic
+        img.place(x=190, y=440)
+
+        img2 = None
+            
+        stepsImg.append((img, img2))
+
+        if (len(steps) > 2):
+            e, f = steps[-2]
+            p = Image.new('RGBA', (40*len(e), 40), (255,255,255,0))
+                        
+            for s in range(len(e)):
+                p.paste(pics[e[s]].resize((40,40)), (40*s, 0))
           
             pic = ImageTk.PhotoImage(p)
             img = Label(image=pic)
@@ -390,13 +421,12 @@ def drawPostup():
             img.place(x=190, y=30 + 50)
 
             img2 = None
-            if d is not None and showSteps:
-                img2 = Label(image=rulesImg[d])
-                img2.image = rulesImg[d]
+            if f is not None and showSteps:
+                img2 = Label(image=rulesImg[f])
+                img2.image = rulesImg[f]
                 img2.place(x=660+31*5, y=30 + 50)
-            
-            stepsImg.append((img, img2))
-        
+
+            stepsImg.insert(1, (img, img2))   
     
     if check():
         gameWon = True
@@ -414,7 +444,27 @@ def drawWin():
     img.image = pic
     img.place(x=350, y=100)
     winRef = img
+    
 
+def deleteSteps():
+    global steps, stepsImg, gameWon, winRef
+    if (len(steps) > 2) and not gameWon:
+        steps = steps[:1] + steps[-1:]
+        first = steps[0][0]
+        last = steps[1][0]
+        steps = [(first, None), (last, None)]
+        drawPostup()
+        
+    if (len(steps) > 2) and gameWon:
+        steps = steps[:1] + steps[-1:]
+        first = steps[0][0]
+        last = steps[1][0]
+        steps = [(first, None), (last, None)]
+        winRef.after(0, winRef.destroy)
+        winRef = None
+        gameWon = False
+        drawPostup()
+    
 root = Tk()
 root.title("Gramatik")
 root.geometry("1000x500")
@@ -427,6 +477,7 @@ check_button.set(1)
 nastavenia.add_checkbutton(label="Zobrazovať postup", variable=check_button, command=zobrazPostup)
 menubar.add_cascade(label ="Nastavenia", menu=nastavenia)
 menubar.add_command(label ="Nové slovo", command= lambda slovo=slovo: noveSlovo(slovo))
+menubar.add_command(label ="Riešiť odznova", command=deleteSteps)
 
 #frame pre pravidlá
 pravidla = LabelFrame (root, bg='#D9A5F9', text="Tlačidlá s pravidlami")

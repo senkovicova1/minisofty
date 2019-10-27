@@ -1,0 +1,4 @@
+obrazky
+a -> aa
+b -> acb
+c -> bc
