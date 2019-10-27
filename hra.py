@@ -5,7 +5,7 @@ from functools import partial
 
 from PIL import Image, ImageTk
 
-
+rulesButton = []
 rules = {} #pravidla nacitane zo suboru - index je ynacka obrazku a value je na co sa zmeni
 rulesImg = {} #pravidla ale uz s obrazkami 
 pics = {} #tri obrazky reprezentujuce slova
@@ -31,6 +31,7 @@ gameWon = False
 
 def vyberSubor():
     file_path = filedialog.askopenfilename(initialdir = "/",title = "Select file",filetypes =(("Text File", "*.txt"),("All Files","*.*")),)
+    noveSlovo()
     loadRules(file_path[file_path.rindex("/")+1:])
 
 def zobrazPostup():
@@ -42,9 +43,8 @@ def zobrazPostup():
     if len(steps) > 0 and not gameWon:
         drawPostup()
 
-def noveSlovo(slovo):
-    global startWord, endWord, endWordImg, gameWon, winRef, steps, stepsImg, difficulty, dis_img
-    #zruší celý postup a koncové slovo - dorobiť
+def noveSlovo():
+    global startWord, endWord, endWordImg, gameWon, winRef, steps, stepsImg, difficulty, dis_img, slovo
     #odblokuje používanie obrázkov
     if (len(endWord) == 0):
         
@@ -92,7 +92,7 @@ def StartMove(img, event):
     img.y = event.y
 
 def StopMove(index, img, event, x, y, render):
-    global startWord
+    global startWord, slovo
     info = img.place_info()
     dx = int(info.get('x'))
     dy = int(info.get('y'))
@@ -189,9 +189,13 @@ def loadRules(file):
     drawRules()
 
 def drawRules():
-    global rulesImg, pics, rules, root, pravidla, render1, render2, render3, helpArr
+    global rulesImg, pics, rules, root, pravidla, render1, render2, render3, helpArr, rulesButton
     r = sorted(list(rules.keys()))
-        
+
+    if rulesButton:
+        for a in range(len(rulesButton)):
+            rulesButton[a].destroy()
+
     for i in range(len(rules)):
         index = r[i]
         seq = rules[index]
@@ -242,6 +246,7 @@ def drawRules():
             img3.bind("<ButtonRelease-1>", lambda event: StopMove(helpArr[2], img3, event, 10, 240, render3))
             img3.bind("<B1-Motion>", lambda event: OnMotion(img3, event))
             img3.place(x=10, y=240)
+    rulesButton = [pravidlo1, pravidlo2, pravidlo3]
 
 def vytvorSipku():
     global arrow
@@ -251,7 +256,7 @@ def vytvorSipku():
     arrow.place(x=190, y=285)
 
 def getColor(event):
-    global arrow
+    global arrow, slovo
     dx = event.x
     dy = event.y
     ids = arrow.find_overlapping(dx, dy, dx, dy)
@@ -476,7 +481,7 @@ check_button = Variable()
 check_button.set(1)
 nastavenia.add_checkbutton(label="Zobrazovať postup", variable=check_button, command=zobrazPostup)
 menubar.add_cascade(label ="Nastavenia", menu=nastavenia)
-menubar.add_command(label ="Nové slovo", command= lambda slovo=slovo: noveSlovo(slovo))
+menubar.add_command(label ="Nové slovo", command= lambda: noveSlovo())
 menubar.add_command(label ="Riešiť odznova", command=deleteSteps)
 
 #frame pre pravidlá
